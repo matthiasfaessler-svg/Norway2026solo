@@ -106,6 +106,7 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ok); fle
 .addrow input, .addrow select { flex: 1 1 140px; min-width: 0; }
 input[type="text"], input[type="number"], input[type="date"], select, textarea { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
 textarea { min-height: 70px; resize: vertical; }
+a.btn { text-decoration: none; display: inline-block; }
 .btn { background: var(--fg); color: var(--bg); border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
 .btn.danger { background: var(--accent); color: #fff; }
@@ -157,15 +158,15 @@ footer { margin-top: 32px; display: grid; gap: 10px; }
   <header class="top">
     <div class="top-row">
       <div>
-        <div class="label">Solotrip · 16 Tage · 15 Nächte</div>
-        <h1>Norwegen 2026</h1>
+        <div class="label">Solotrip im Wohnmobil · ab und bis Thun · Ziel Hamrafjället</div>
+        <h1>Norwegen & Hamrafjället 2026</h1>
         <div class="dates">Fr 23.10. – Sa 07.11.2026</div>
       </div>
       <div class="count" id="countdown"></div>
     </div>
     <div>
       <div class="strip" id="strip" aria-label="Tageslicht pro Reisetag"></div>
-      <div class="strip-legend"><span>23.10.</span><span>gelb = Stunden mit Sonne über dem Horizont, je nach Ort</span><span>07.11.</span></div>
+      <div class="strip-legend"><span>23.10.</span><span>Sonnenstunden (6–12 h)</span><span>07.11.</span></div>
     </div>
   </header>
 
@@ -202,15 +203,14 @@ const KEY = 'norwegen2026-v1';
 
 /* ---------- Orte mit Koordinaten (für Sonnenauf-/untergang) ---------- */
 const PLACES = {
-  oslo: ['Oslo', 59.91, 10.75], bergen: ['Bergen', 60.39, 5.32], flam: ['Flåm', 60.86, 7.11],
-  stavanger: ['Stavanger', 58.97, 5.73], kristiansand: ['Kristiansand', 58.15, 8.0],
-  lillehammer: ['Lillehammer', 61.11, 10.47], roros: ['Røros', 62.57, 11.38],
-  alesund: ['Ålesund', 62.47, 6.15], geiranger: ['Geiranger', 62.10, 7.21],
-  trondheim: ['Trondheim', 63.43, 10.40], bodo: ['Bodø', 67.28, 14.40],
-  svolvaer: ['Svolvær (Lofoten)', 68.23, 14.57], reine: ['Reine (Lofoten)', 67.93, 13.09],
-  narvik: ['Narvik', 68.44, 17.43], senja: ['Senja', 69.23, 17.98], tromso: ['Tromsø', 69.65, 18.96],
-  alta: ['Alta', 69.97, 23.27], hammerfest: ['Hammerfest', 70.66, 23.68], kirkenes: ['Kirkenes', 69.73, 30.05],
-  hurtigruten: ['An Bord (Küste Nord)', 68.8, 16.0]
+  thun: ['Thun', 46.76, 7.63], freiburg: ['Freiburg i. Br.', 47.99, 7.85], kassel: ['Kassel', 51.31, 9.48],
+  hamburg: ['Hamburg', 53.55, 9.99], kiel: ['Kiel', 54.32, 10.14],
+  colorline: ['Fähre Kiel → Oslo', 57.5, 10.6], stenaline: ['Fähre Göteborg → Kiel', 56.3, 11.4],
+  oslo: ['Oslo', 59.91, 10.75], lillehammer: ['Lillehammer', 61.11, 10.47], rondane: ['Rondane (Atna)', 61.73, 10.82],
+  roros: ['Røros', 62.57, 11.38], tanndalen: ['Tänndalen / Hamrafjället (SE)', 62.55, 12.31],
+  funasdalen: ['Funäsdalen (SE)', 62.54, 12.55], sveg: ['Sveg (SE)', 62.03, 14.36], mora: ['Mora (SE)', 61.00, 14.54],
+  karlstad: ['Karlstad (SE)', 59.38, 13.50], goteborg: ['Göteborg (SE)', 57.71, 11.97],
+  trondheim: ['Trondheim', 63.43, 10.40], bergen: ['Bergen', 60.39, 5.32]
 };
 
 /* ---------- Datum-Helfer ---------- */
@@ -251,64 +251,77 @@ function light(s, key) {
 /* ---------- Standarddaten ---------- */
 let uid = 0; const id = () => Date.now().toString(36) + (uid++).toString(36);
 const PACK = {
-  'Kleidung (Zwiebel)': ['Merino-Unterwäsche lang (2×)', 'Merino-Shirts (3×)', 'Fleece oder Wollpullover', 'Isolationsjacke (Daune/Synthetik)', 'Wasserdichte Hardshell-Jacke', 'Regenhose', 'Wanderhose', 'Wollsocken (5×)', 'Mütze, Buff, Handschuhe + Fäustlinge', 'Wasserdichte Wanderschuhe', 'Bequeme Schuhe für die Stadt', 'Badesachen (Badstue/Sauna)'],
-  'Ausrüstung': ['Stirnlampe + Ersatzbatterien', 'Grödel / Spikes für Eis', 'Reflektor (Refleks) für dunkle Strassen', 'Thermosflasche', 'Trinkflasche', 'Tagesrucksack mit Regenhülle', 'Packsäcke / Trockenbeutel', 'Schnelltrocknendes Handtuch', 'Ohrstöpsel + Schlafmaske'],
-  'Technik & Fotografie': ['Handy + Ladekabel', 'Powerbank (Kälte leert Akkus schnell)', 'Stativ für Nordlicht', 'Ersatzakkus Kamera (körpernah tragen)', 'Speicherkarten', 'Reisestecker (Norwegen: Typ C/F)', 'Kopfhörer'],
-  'Dokumente & Geld': ['Pass oder ID (gültig bis nach 07.11.)', 'Kreditkarte + Ersatzkarte', 'Krankenversicherungskarte / EHIC', 'Reiseversicherung (Police offline)', 'Führerschein (falls Mietwagen)', 'Buchungsbestätigungen offline', 'Notfallkontakte auf Papier'],
-  'Gesundheit & Pflege': ['Reiseapotheke + Blasenpflaster', 'Persönliche Medikamente', 'Lippenbalsam + reichhaltige Creme', 'Sonnencreme (Schnee reflektiert)', 'Vitamin D', 'Handwärmer']
+  'Wohnmobil & Fahrzeug': ['Winterreifen (M+S / Schneeflocke) montiert', 'Schneeketten, einmal anprobiert', 'Gasflaschen voll + Adapterset Skandinavien', 'Frostschutz im Scheibenwischwasser', 'Eiskratzer, Schneebesen, Klappschaufel', 'CEE-Stromkabel + Adapter auf Schuko', 'Wasserschlauch + Hahnadapter', 'Auffahrkeile', 'Starthilfekabel + Abschleppseil', 'Warndreieck + Warnwesten', 'Feuerlöscher', 'Toilettenchemie + Ersatzbeutel', 'Ersatzsicherungen + Glühbirnen', 'CH-Länderkennzeichen am Heck'],
+  'Kleidung (Zwiebel)': ['Merino-Unterwäsche lang (2×)', 'Merino-Shirts (3×)', 'Fleece oder Wollpullover', 'Isolationsjacke (Daune/Synthetik)', 'Wasserdichte Hardshell-Jacke', 'Regenhose', 'Wanderhose', 'Wollsocken (5×)', 'Mütze, Buff, Handschuhe', 'Wasserdichte Wanderschuhe', 'Hüttenschuhe fürs Womo', 'Badesachen (Badstue/Sauna)'],
+  'Ausrüstung': ['Stirnlampe + Ersatzbatterien', 'Grödel / Spikes für Eis', 'Reflektor (Refleks) für dunkle Strassen', 'Thermosflasche', 'Tagesrucksack mit Regenhülle', 'Schnelltrocknende Handtücher', 'Warme Decke / Winterschlafsack als Reserve'],
+  'Küche & Vorrat': ['Grundvorrat (Pasta, Reis, Kaffee, Gewürze)', 'Konserven für 3–4 Tage', 'Brotbelag (Zollgrenzen beachten)', 'Spülmittel, Lappen, Abfallsäcke', 'Feuerzeug / Stabfeuerzeug'],
+  'Technik & Fotografie': ['Handy + Ladekabel', 'Handyhalterung + 12V-Ladegerät', 'Powerbank', 'Stativ für Nordlicht', 'Ersatzakkus Kamera', 'Reiseadapter CH (Typ J) → Schuko'],
+  'Dokumente & Geld': ['Pass oder ID', 'Führerausweis', 'Fahrzeugausweis', 'Internationale Versicherungskarte', 'Schutzbrief / Pannenhilfe (TCS, ETI o. ä.)', 'Kreditkarte mit PIN + Ersatzkarte', 'Fährtickets offline', 'Notfallkontakte auf Papier'],
+  'Gesundheit & Pflege': ['Reiseapotheke + Blasenpflaster', 'Persönliche Medikamente', 'Lippenbalsam + reichhaltige Creme', 'Vitamin D', 'Handwärmer']
 };
 const TODOS = [
-  ['Flüge hin und zurück buchen', '2026-10-12', 'Buchung'],
-  ['Alle 15 Nächte Unterkunft festmachen', '2026-10-15', 'Buchung'],
-  ['Reiseversicherung prüfen (Rücktransport, Storno)', '2026-10-14', 'Dokumente'],
-  ['Pass/ID-Gültigkeit prüfen', '2026-10-12', 'Dokumente'],
-  ['Kreditkarte ohne Auslandsgebühr bereitlegen, Reisebank informieren', '2026-10-16', 'Geld'],
-  ['Mobilfunk: Roaming-Tarif oder eSIM für Norwegen', '2026-10-18', 'Technik'],
-  ['Apps installieren: Entur, Yr, Vy, Varsom, Norway Lights', '2026-10-18', 'Technik'],
-  ['Offline-Karten laden (Google/Maps.me/Norgeskart)', '2026-10-20', 'Technik'],
-  ['Zug-/Fährtickets buchen (Bergensbahn, Hurtigruten, Fähren)', '2026-10-16', 'Buchung'],
-  ['Mietwagen: Winterreifen bestätigen, AutoPASS/Maut klären', '2026-10-16', 'Buchung'],
-  ['Reiseplan + Unterkünfte mit Notfallkontakt teilen', '2026-10-21', 'Sicherheit'],
-  ['Wettervorhersage Yr checken, Packliste anpassen', '2026-10-21', 'Packen'],
-  ['Online-Check-in Hinflug', '2026-10-22', 'Buchung']
+  ['Fähre Kiel → Oslo buchen (Länge, Höhe, Gewicht angeben)', '2026-10-12', 'Buchung'],
+  ['Fähre Göteborg → Kiel buchen (Stena Line, Nachtfähre)', '2026-10-12', 'Buchung'],
+  ['AutoPASS-Vertrag (Epass24) für Maut in Norwegen abschliessen', '2026-10-14', 'Buchung'],
+  ['Stellplatz in Tänndalen für 29.10.–02.11. klären (Saison beginnt erst mit dem Schnee)', '2026-10-15', 'Buchung'],
+  ['Ganzjährig offene Plätze in Oslo, Lillehammer, Røros heraussuchen', '2026-10-16', 'Buchung'],
+  ['Hamrafjället-Route offline speichern (Komoot / Naturkartan)', '2026-10-20', 'Wandern'],
+  ['Wanderausrüstung für Schnee prüfen: Spikes, Stöcke, Gamaschen', '2026-10-19', 'Wandern'],
+  ['Wohnmobil-Check: Heizung, Gasanlage, Batterie, Bremsen, Licht', '2026-10-16', 'Fahrzeug'],
+  ['Winterreifen montieren, Schneeketten anprobieren', '2026-10-17', 'Fahrzeug'],
+  ['Gasflaschen füllen, Adapter für Skandinavien besorgen', '2026-10-19', 'Fahrzeug'],
+  ['Schutzbrief/Pannenhilfe und Versicherungskarte prüfen', '2026-10-14', 'Dokumente'],
+  ['Zollfreigrenzen Norwegen (toll.no) und Rückeinreise CH (BAZG) prüfen', '2026-10-18', 'Dokumente'],
+  ['Mobilfunk: Roaming-Paket oder eSIM für EU, Norwegen, Schweden', '2026-10-18', 'Technik'],
+  ['Apps installieren: Yr, Vegvesen Trafikk, Trafikverket, Park4Night, Komoot', '2026-10-18', 'Technik'],
+  ['Offline-Karten Deutschland, Norwegen, Schweden laden', '2026-10-20', 'Technik'],
+  ['Vorräte einkaufen (Norwegen ist teuer)', '2026-10-22', 'Packen'],
+  ['Reiseplan und Stellplätze mit Notfallkontakt teilen', '2026-10-21', 'Sicherheit']
 ];
+// [Region, Ort, Plan, Transport, km]
 const SUGGEST = [
-  ['oslo', 'Oslo', 'Ankunft, Flughafenzug nach Oslo S'],
-  ['oslo', 'Oslo', 'Oper, Munch, Vigelandpark'],
-  ['bergen', 'Bergen', 'Bergensbahn Oslo → Bergen (ca. 7 h, Fensterplatz links)'],
-  ['bergen', 'Bergen', 'Bryggen, Fløyen'],
-  ['flam', 'Flåm / Nærøyfjord', 'Fjordtour, Flåmsbana'],
-  ['bergen', 'Bergen', 'Puffertag'],
-  ['tromso', 'Tromsø', 'Flug Bergen → Tromsø'],
-  ['tromso', 'Tromsø', 'Nordlicht-Tour am Abend'],
-  ['tromso', 'Tromsø', 'Fjellheisen, Eismeerkathedrale'],
-  ['senja', 'Senja', 'Tagesausflug oder Übernachtung'],
-  ['hurtigruten', 'Hurtigruten', 'Tromsø → Svolvær an Bord'],
-  ['svolvaer', 'Lofoten', 'Svolvær, Henningsvær'],
-  ['reine', 'Lofoten', 'Reine, Hamnøy, Å'],
-  ['bodo', 'Bodø', 'Fähre Moskenes → Bodø, Saltstraumen'],
-  ['oslo', 'Oslo', 'Flug Bodø → Oslo, letzter Abend'],
-  ['oslo', 'Oslo', 'Heimflug']
+  ['kassel', 'Thun → Kassel', 'Abfahrt, erste lange Etappe', 'Thun–Basel–Frankfurt–Kassel', 620],
+  ['colorline', 'Kiel → Fähre', 'Color Line ab Kiel 14:00, Nacht an Bord', 'Kassel–Hamburg–Kiel', 380],
+  ['oslo', 'Oslo', 'Ankunft 10:00, Bygdøy, Oper', 'Fähre, Zeitumstellung in der Nacht!', 0],
+  ['lillehammer', 'Lillehammer', 'Maihaugen, Olympiaschanze', 'E6 am Mjøsa entlang', 180],
+  ['roros', 'Røros', 'Ankommen bei Tageslicht', 'Rv3 durchs Østerdalen', 290],
+  ['roros', 'Røros', 'Alte Bergbaustadt (UNESCO), Smelthytta', '', 0],
+  ['tanndalen', 'Tänndalen', 'Stellplatz beziehen, kurze Runde zum Einlaufen', 'Rv31 über Brekken, Grenze, Strasse 84', 60],
+  ['tanndalen', 'Hamrafjället', 'Gipfelrunde ca. 7,5 km, 360 Hm, 2½–3 h · Hauptziel', 'Parkplatz an der Strasse 84', 5],
+  ['tanndalen', 'Hamrafjället', 'Reservetag für schlechtes Wetter', '', 0],
+  ['tanndalen', 'Tänndalen', 'Anderssjöåfallet oder Ruhetag, Sauna', '', 10],
+  ['mora', 'Mora', 'Heimweg durch Härjedalen und Dalarna', 'Funäsdalen–Sveg–Orsa–Mora', 300],
+  ['karlstad', 'Karlstad', 'Etappe am Vänern', 'Rv45/Rv62', 230],
+  ['stenaline', 'Göteborg → Fähre', 'Stena Line am Abend, Nacht an Bord', 'E45 nach Göteborg', 250],
+  ['kassel', 'Kiel → Kassel', 'Ankunft am Morgen', 'A7', 380],
+  ['freiburg', 'Freiburg', 'Etappe', 'A7/A5', 460],
+  ['thun', 'Thun', 'Ankunft zuhause', 'Basel–Bern–Thun', 170]
 ];
 function defaults() {
   const days = {};
-  tripDays.forEach((s, i) => { const [loc, place, plan] = SUGGEST[i]; days[s] = { loc, place, plan, stay: '', transport: '', notes: '', booked: false }; });
+  tripDays.forEach((s, i) => { const [loc, place, plan, transport, km] = SUGGEST[i]; days[s] = { loc, place, plan, transport, km, stay: '', notes: '', booked: i === 1 || i === 12 }; });
   const packing = [];
   Object.entries(PACK).forEach(([cat, items]) => items.forEach(text => packing.push({ id: id(), cat, text, done: false })));
   return {
-    v: 1, updatedAt: 0, suggestion: true,
-    home: 'EUR', rate: 11.7,
-    plan: { 'Flüge': 600, 'Unterkunft': 1800, 'Transport': 500, 'Essen': 700, 'Aktivitäten': 500, 'Sonstiges': 200 },
+    v: 3, updatedAt: 0, suggestion: true,
+    home: 'CHF', rate: 12.5, rateSek: 11.8,
+    plan: { 'Fähren': 900, 'Diesel': 800, 'Maut & Brücken': 150, 'Stellplätze': 500, 'Essen': 600, 'Aktivitäten': 300, 'Sonstiges': 200 },
     expenses: [], days, packing,
     todos: TODOS.map(([text, due, cat]) => ({ id: id(), text, due, cat, done: false })),
     notes: ''
   };
 }
+// Ältere Versionen hatten eine andere Route: Route, Listen und Budget neu, Ausgaben und Notizen bleiben.
+function migrate(s) {
+  if (!s || !s.days) return defaults();
+  if (s.v === 3) return s;
+  const n = defaults(); n.expenses = s.expenses || []; n.notes = s.notes || ''; n.updatedAt = Date.now(); return n;
+}
 
 /* ---------- Speicher ---------- */
 let state;
 try { const raw = localStorage.getItem(KEY); state = raw ? JSON.parse(raw) : null; } catch (e) { state = null; }
-if (!state || state.v !== 1) state = defaults();
+state = migrate(state);
 let tab = 'uebersicht';
 try { tab = localStorage.getItem(KEY + '-tab') || tab; } catch (e) {}
 if (/^#[a-z]+$/.test(location.hash)) tab = location.hash.slice(1);
@@ -340,7 +353,7 @@ async function initCloud() {
     cloud = ref;
     const remote = snap.exists ? snap.data() : null;
     if (remote && remote.updatedAt > (state.updatedAt || 0)) {
-      state = JSON.parse(remote.json);
+      state = migrate(JSON.parse(remote.json));
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
       render();
       syncEl.textContent = 'In deinem Konto gespeichert';
@@ -352,7 +365,7 @@ async function initCloud() {
 /* ---------- Rendering ---------- */
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (v, cur) => `${Math.round(v).toLocaleString('de-CH')} ${cur}`;
-const toHome = e => (e.cur === 'NOK' ? e.amount / (state.rate || 1) : e.amount);
+const toHome = e => (e.cur === 'NOK' ? e.amount / (state.rate || 1) : e.cur === 'SEK' ? e.amount / (state.rateSek || 1) : e.amount);
 const main = document.getElementById('main');
 
 function renderHead() {
@@ -363,7 +376,7 @@ function renderHead() {
   else cd.innerHTML = `<div class="big">Hjemme</div><div class="label">Willkommen zurück</div>`;
   document.getElementById('strip').innerHTML = tripDays.map(s => {
     const d = state.days[s] || {}; const l = light(s, d.loc);
-    const h = l ? Math.max(2, l.len / 1440 * 100 * 2.2) : 0;
+    const h = l ? Math.max(4, (l.len - 360) / 360 * 100) : 0; // Skala 6–12 h Sonne
     const title = `${fmtShort(s)} ${d.place || ''}${l && !l.polar ? ` · Sonne ${dur(l.len)}` : ''}`;
     return `<div class="d${s === t ? ' today' : ''}" title="${esc(title)}"><div class="sunbar" style="height:${Math.min(100, h)}%"></div></div>`;
   }).join('');
@@ -378,13 +391,14 @@ function viewOverview() {
   const planned = Object.values(state.plan).reduce((a, b) => a + (+b || 0), 0);
   const nights = tripDays.slice(0, -1);
   const booked = nights.filter(s => state.days[s]?.booked).length;
+  const km = tripDays.reduce((a, s) => a + (+state.days[s]?.km || 0), 0);
   const t = todayIso();
   const open = state.todos.filter(x => !x.done).sort((a, b) => (a.due || '9') < (b.due || '9') ? -1 : 1).slice(0, 5);
-  const firstDay = state.days[START], l = light(START, firstDay?.loc);
   return `
   <section class="panel">
     <div class="stats">
-      ${stat('Unterkünfte', `${booked}/15`, 'Nächte gebucht', pct(booked, 15))}
+      ${stat('Stellplätze', `${booked}/15`, 'Nächte fix', pct(booked, 15))}
+      ${stat('Strecke', `${km.toLocaleString('de-CH')} km`, `≈ ${Math.round(km * 0.11)} l Diesel bei 11 l/100 km`, 100)}
       ${stat('To-dos', `${todoDone}/${state.todos.length}`, 'erledigt', pct(todoDone, state.todos.length))}
       ${stat('Packliste', `${packDone}/${state.packing.length}`, 'eingepackt', pct(packDone, state.packing.length))}
       ${stat('Budget', money(spent, state.home), `von ${money(planned, state.home)}`, pct(spent, planned), spent > planned)}
@@ -393,21 +407,23 @@ function viewOverview() {
       <div class="cat-head"><h2>Als Nächstes</h2><button class="btn ghost" data-go="todo">Alle To-dos</button></div>
       ${open.length ? `<ul class="checks">${open.map(todoItem).join('')}</ul>` : '<p class="empty">Alles erledigt. God tur!</p>'}
     </div>
-    <div class="note"><strong>Zeitumstellung am So 25.10.2026:</strong> Norwegen stellt um 03:00 auf Winterzeit (UTC+1) zurück. Zug-, Fähr- und Tourzeiten an diesem Tag doppelt prüfen.</div>
+    ${hamraCard()}
+    <div class="note"><strong>Zeitumstellung in der Nacht auf So 25.10.2026:</strong> Die Uhren gehen um 03:00 eine Stunde zurück, während du auf der Fähre nach Oslo bist. Ankunftszeit und Handyuhr am Morgen prüfen.</div>
     <div class="grid2">
       <div class="card">
         <h3>Was dich erwartet</h3>
         <ul style="margin:0;padding-left:18px;display:grid;gap:4px">
-          <li>Süden/Westen: 2–10 °C, viel Regen, Bergen ist die nasseste Stadt Europas.</li>
-          <li>Norden (Tromsø, Lofoten): −3 bis 5 °C, erster Schnee, glatte Wege.</li>
-          <li>Tageslicht schrumpft schnell: Tromsø verliert pro Tag rund 15 Minuten.</li>
-          <li>Beste Nordlicht-Saison: lange dunkle Nächte, klare Abende abpassen.</li>
+          <li>Oslo und Südschweden: 2–10 °C, oft Regen und Nebel.</li>
+          <li>Røros und Tänndalen liegen auf 600–750 m: Ende Oktober oft schon Schnee und −10 °C in der Nacht. Røros gehört zu den kältesten Orten Norwegens.</li>
+          <li>Viele Campingplätze haben zwischen Herbst- und Wintersaison zu. Plätze vorab anfragen.</li>
+          <li>Tageslicht in Tänndalen Ende Oktober: rund 8,5 Stunden. Wanderung früh starten.</li>
         </ul>
       </div>
       <div class="card">
-        <h3>Ankunftstag ${esc(firstDay?.place || '')}</h3>
-        ${l && !l.polar ? `<p style="margin:0">Sonnenaufgang <span class="mono">${hm(l.rise)}</span>, Sonnenuntergang <span class="mono">${hm(l.set)}</span>. Tageslicht ${dur(l.len)}.</p>` : '<p class="muted" style="margin:0">Ort für den 23.10. in der Route wählen.</p>'}
-        <p class="muted" style="margin:0">Plane Ankünfte bei Tageslicht, besonders an neuen Orten und mit Mietwagen.</p>
+        <h3>Fähren</h3>
+        <p style="margin:0"><strong>Hin:</strong> Kiel → Oslo, Sa 24.10. ab 14:00, an So 10:00 (Color Line, Nacht an Bord).</p>
+        <p style="margin:0"><strong>Zurück:</strong> Göteborg → Kiel, Mi 04.11. abends, an Do morgens (Stena Line, Nacht an Bord).</p>
+        <p class="muted" style="margin:0">Zeiten sind Richtwerte. Massgebend ist deine Buchung.</p>
         <button class="btn ghost" data-go="route" style="justify-self:start">Route ansehen</button>
       </div>
     </div>
@@ -421,13 +437,14 @@ function viewRoute() {
   const t = todayIso();
   const opts = sel => Object.entries(PLACES).map(([k, p]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${esc(p[0])}</option>`).join('');
   return `<section class="panel">
-    ${state.suggestion ? `<div class="note info"><strong>Vorschlag:</strong> Die Route ist eine Beispielroute Oslo → Bergen → Tromsø → Lofoten → Oslo. Tippe auf einen Tag, um Ort, Unterkunft und Pläne anzupassen. <button class="btn ghost" data-action="clearRoute" style="margin-top:8px">Leere Route beginnen</button> <button class="btn ghost" data-action="hideSuggest" style="margin-top:8px">Hinweis ausblenden</button></div>` : ''}
+    ${state.suggestion ? `<div class="note info"><strong>Vorschlag:</strong> Thun → Kiel → Fähre Oslo → Lillehammer → Røros → Tänndalen (Hamrafjället, 4 Tage mit Wetterreserve) → Mora → Karlstad → Fähre Göteborg–Kiel → Thun, rund 3&nbsp;300 km. Tippe auf einen Tag, um Ort, Stellplatz und Etappe anzupassen. <button class="btn ghost" data-action="clearRoute" style="margin-top:8px">Leere Route beginnen</button> <button class="btn ghost" data-action="hideSuggest" style="margin-top:8px">Hinweis ausblenden</button></div>` : ''}
+    <div class="muted">Gesamtstrecke: <span class="mono">${tripDays.reduce((a, s) => a + (+state.days[s].km || 0), 0).toLocaleString('de-CH')} km</span></div>
     <div style="display:grid;gap:8px">
     ${tripDays.map((s, i) => {
       const d = state.days[s]; const l = light(s, d.loc); const last = i === tripDays.length - 1;
       const sun = l ? (l.polar ? (l.polar === 'night' ? 'Polarnacht' : 'Mitternachtssonne') : `☀ ${hm(l.rise)}–${hm(l.set)}<br>${dur(l.len)}`) : '';
       const bar = l && !l.polar ? `<div class="lightbar" title="Tageslicht"><i style="left:${l.rise / 1440 * 100}%;width:${l.len / 1440 * 100}%"></i></div>` : '';
-      const status = last ? '<span class="pill neutral">Heimreise</span>' : d.booked ? '<span class="pill ok">gebucht</span>' : '<span class="pill warn">Unterkunft offen</span>';
+      const status = (+d.km ? `<span class="pill neutral">${d.km} km</span> ` : '') + (last ? '<span class="pill neutral">zuhause</span>' : d.booked ? '<span class="pill ok">Stellplatz fix</span>' : '<span class="pill warn">Stellplatz offen</span>');
       return `<details class="day${s === t ? ' today' : ''}" data-day="${s}"${openDays.has(s) ? ' open' : ''}>
         <summary>
           <div class="dt"><span>${WD[parse(s).getDay()]} · Tag ${i + 1}</span><b class="num">${pad(parse(s).getDate())}.${pad(parse(s).getMonth() + 1)}.</b></div>
@@ -441,10 +458,11 @@ function viewRoute() {
             <label>Ort (Anzeige)<input type="text" id="place-${s}" data-f="place" value="${esc(d.place)}"></label>
             <label>Region für Sonnenzeiten<select id="loc-${s}" data-f="loc"><option value="">–</option>${opts(d.loc)}</select></label>
             <label>Plan<input type="text" id="plan-${s}" data-f="plan" value="${esc(d.plan)}"></label>
-            <label>Anreise / Transport<input type="text" id="transport-${s}" data-f="transport" value="${esc(d.transport)}" placeholder="z. B. Vy 06:25 ab Oslo S"></label>
-            ${last ? '' : `<label>Unterkunft<input type="text" id="stay-${s}" data-f="stay" value="${esc(d.stay)}" placeholder="Name, Adresse, Check-in"></label>`}
+            <label>Etappe / Strecke<input type="text" id="transport-${s}" data-f="transport" value="${esc(d.transport)}" placeholder="z. B. E16 über Filefjell"></label>
+            <label>Kilometer<input type="number" min="0" step="10" id="km-${s}" data-f="km" value="${+d.km || 0}"></label>
+            ${last ? '' : `<label>Stellplatz / Camping<input type="text" id="stay-${s}" data-f="stay" value="${esc(d.stay)}" placeholder="Name, Koordinaten, Strom ja/nein"></label>`}
           </div>
-          <label class="fields" style="display:flex;gap:8px;align-items:center;color:var(--fg)">${last ? '' : `<input type="checkbox" id="booked-${s}" data-f="booked"${d.booked ? ' checked' : ''}> Unterkunft gebucht`}</label>
+          <label class="fields" style="display:flex;gap:8px;align-items:center;color:var(--fg)">${last ? '' : `<input type="checkbox" id="booked-${s}" data-f="booked"${d.booked ? ' checked' : ''}> Stellplatz fix (gebucht oder sicher offen)`}</label>
           <label style="display:grid;gap:4px;font-size:.85rem;color:var(--muted)">Notizen<textarea id="notes-${s}" data-f="notes">${esc(d.notes)}</textarea></label>
         </div>
       </details>`;
@@ -471,7 +489,7 @@ function viewTodo() {
       <form class="addrow" data-form="todo">
         <input type="text" id="new-todo" name="text" placeholder="Neue Aufgabe" required>
         <input type="date" id="new-todo-due" name="due" min="2026-01-01" max="${END}">
-        <select id="new-todo-cat" name="cat">${['Buchung', 'Dokumente', 'Geld', 'Technik', 'Sicherheit', 'Packen', 'Sonstiges'].map(c => `<option>${c}</option>`).join('')}</select>
+        <select id="new-todo-cat" name="cat">${['Buchung', 'Fahrzeug', 'Wandern', 'Dokumente', 'Geld', 'Technik', 'Sicherheit', 'Packen', 'Sonstiges'].map(c => `<option>${c}</option>`).join('')}</select>
         <button class="btn">Hinzufügen</button>
       </form>
       ${sorted.length ? `<ul class="checks">${sorted.map(todoItem).join('')}</ul>` : '<p class="empty">Noch keine Aufgaben. Füge oben die erste hinzu.</p>'}
@@ -522,56 +540,91 @@ function viewBudget() {
       <div class="fields">
         <label>Heimwährung<select id="home-cur" data-setting="home">${['EUR', 'CHF', 'USD', 'GBP'].map(c => `<option${c === H ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
         <label>Kurs: 1 ${H} = … NOK<input type="number" step="0.01" min="0.01" id="rate" data-setting="rate" value="${state.rate}"></label>
+        <label>Kurs: 1 ${H} = … SEK<input type="number" step="0.01" min="0.01" id="rate-sek" data-setting="rateSek" value="${state.rateSek}"></label>
       </div>
     </div>
     <div class="card">
       <h2>Ausgabe erfassen</h2>
       <form class="addrow" data-form="expense">
-        <input type="text" id="exp-text" name="text" placeholder="z. B. Fiskesuppe Bergen" required>
+        <input type="text" id="exp-text" name="text" placeholder="z. B. Diesel Røros" required>
         <input type="number" id="exp-amount" name="amount" step="0.01" min="0" placeholder="Betrag" required>
-        <select id="exp-cur" name="cur"><option>NOK</option><option>${H}</option></select>
+        <select id="exp-cur" name="cur"><option>NOK</option><option>SEK</option><option>${H}</option></select>
         <select id="exp-cat" name="cat">${cats.map(c => `<option>${esc(c)}</option>`).join('')}</select>
         <input type="date" id="exp-date" name="date" value="${todayIso() >= START && todayIso() <= END ? todayIso() : START}">
         <button class="btn">Erfassen</button>
       </form>
       ${list.length ? `<div class="tablewrap"><table><thead><tr><th>Datum</th><th>Was</th><th>Kategorie</th><th class="r">Betrag</th><th class="r">${H}</th><th></th></tr></thead><tbody>
       ${list.map(e => `<tr><td class="mono">${fmtShort(e.date)}</td><td>${esc(e.text)}</td><td class="muted">${esc(e.cat)}</td><td class="r mono">${e.amount.toLocaleString('de-CH')} ${e.cur}</td><td class="r mono">${toHome(e).toFixed(2)}</td><td><button class="x" data-del="expenses:${e.id}" aria-label="Löschen">×</button></td></tr>`).join('')}
-      </tbody></table></div>` : '<p class="empty">Noch keine Ausgaben. Erfasse Beträge direkt in NOK, die App rechnet in deine Währung um.</p>'}
+      </tbody></table></div>` : '<p class="empty">Noch keine Ausgaben. Erfasse Beträge direkt in NOK oder SEK, die App rechnet in deine Währung um.</p>'}
     </div>
-    <div class="note info">Richtwerte: Kaffee 45–60 NOK, Mittagessen 180–250 NOK, Bier im Pub 110–140 NOK, Nordlicht-Tour 1&nbsp;300–2&nbsp;000 NOK. Alkohol über 4,7 % nur im Vinmonopolet (Sa bis 15/16 Uhr, So zu).</div>
+    <div class="note info">Richtwerte Norwegen: Diesel um 20–23 NOK/l (automatische Stationen wie Uno-X oder YX sind günstiger), Stellplatz/Camping 250–450 NOK, Kaffee 45–60 NOK, Fischsuppe 200–250 NOK. Alkohol über 4,7 % nur im Vinmonopolet bzw. in Schweden im Systembolaget, sonntags zu.</div>
   </section>`;
+}
+
+function hamraCard() {
+  const day = tripDays.find(s => state.days[s].loc === 'tanndalen' && /hamra/i.test(state.days[s].place)) || '2026-10-30';
+  const l = light(day, 'tanndalen');
+  return `<div class="card">
+    <div class="cat-head"><h2>Ziel: Hamrafjället</h2><span class="pill neutral">Schweden · Härjedalen</span></div>
+    <p style="margin:0">Naturreservat an der Strasse 84 bei Tänndalen, etwa 15 km westlich von Funäsdalen und rund 60 km von Røros.</p>
+    <div class="nums">
+      <div><b class="num">7,4</b>km Gipfelrunde</div><div><b class="num">360</b>Höhenmeter</div><div><b class="num">2½–3</b>Stunden</div>
+      <div><b class="num">${l && !l.polar ? hm(l.set) : '–'}</b>Sonnenuntergang ${fmtShort(day)}</div>
+    </div>
+    <ul style="margin:0;padding-left:18px;display:grid;gap:4px">
+      <li>Ende Oktober ist Schnee auf dem Fjäll wahrscheinlich: Spikes, Stöcke, Windjacke, Ersatzhandschuhe, warmes Getränk.</li>
+      <li>Spätestens um 10 Uhr losgehen. Spätestens 1½ Stunden vor Sonnenuntergang wieder unten sein.</li>
+      <li>Bei Sturm oder Nebel oben auf dem kahlen Rücken: Reservetag nutzen.</li>
+      <li>Kürzere Alternativen: Anderssjöåfallet (6 km) oder die Runde ab Andersborg (6,5 km, 210 Hm).</li>
+      <li>Im Reservat sind Zelten und Feuer verboten.</li>
+    </ul>
+    <div class="addrow">
+      <a class="btn ghost" href="https://www.naturkartan.se/de/jamtlands-lan/hamrafjallet" target="_blank" rel="noopener">Naturkartan</a>
+      <a class="btn ghost" href="https://www.komoot.com/guide/160326/hiking-around-hamrafjaellet" target="_blank" rel="noopener">Touren auf Komoot</a>
+      <a class="btn ghost" href="https://www.yr.no/en/search?q=T%C3%A4nndalen" target="_blank" rel="noopener">Wetter Tänndalen</a>
+    </div>
+  </div>`;
 }
 
 function viewTips() {
   return `<section class="panel tips">
+    ${hamraCard()}
     <div class="card"><h2>Notruf</h2>
       <div class="nums"><div><b>112</b>Polizei</div><div><b>113</b>Ambulanz</div><div><b>110</b>Feuer</div><div><b>116 117</b>Ärztlicher Notdienst</div></div>
-      <p class="muted">Seenotrettung: 120 oder über 112. Lawinen- und Wetterwarnungen: varsom.no.</p></div>
+      <p class="muted">112 gilt auch in Deutschland und Schweden. Strassenlage in Norwegen: Telefon 175 oder vegvesen.no/trafikk. Wetterwarnungen: varsom.no.</p></div>
     <div class="grid2">
       <div class="card"><h3>Allein unterwegs</h3><ul>
-        <li>Teile täglich Ort und Unterkunft mit einer Person zuhause.</li>
-        <li>Wanderungen in der Hütte oder Unterkunft hinterlegen, früh starten, vor Einbruch der Dunkelheit zurück.</li>
+        <li>Teile täglich Ort und Stellplatz mit einer Person zuhause.</li>
+        <li>Tour und geplante Rückkehrzeit vor jeder Wanderung durchgeben. Zettel mit der Route gut sichtbar im Womo lassen.</li>
         <li>Fjellvettreglene (Bergregeln) beachten: Umkehren ist keine Schande.</li>
         <li>Stirnlampe und warme Schicht immer dabei, auch bei kurzen Touren.</li>
-        <li>Nordlicht-Touren mit Guide sind allein günstiger und sicherer als Fahrten im Dunkeln.</li>
+        <li>Abends fest stehen statt im Dunkeln weiterfahren.</li>
       </ul></div>
-      <div class="card"><h3>Unterwegs sein</h3><ul>
-        <li><a href="https://entur.no" target="_blank" rel="noopener">Entur</a>: alle Züge, Busse und Fähren in einer App.</li>
-        <li><a href="https://www.vy.no" target="_blank" rel="noopener">Vy</a>: Bergensbahn und Fernzüge, früh buchen für Minipris.</li>
-        <li>Mietwagen: Winterreifen sind im Norden ab Mitte Oktober Pflicht. Maut läuft über AutoPASS.</li>
-        <li>Fähren an der Küste fahren im Winter seltener. Fahrplan am Vortag prüfen.</li>
+      <div class="card"><h3>Mit dem Wohnmobil</h3><ul>
+        <li>Abblendlicht immer an, auch tagsüber. Promillegrenze in Norwegen und Schweden: 0,2 ‰.</li>
+        <li>Über 3,5 t gilt meist max. 80 km/h. Bussen in Norwegen sind sehr hoch.</li>
+        <li>Nicht in der Dämmerung fahren: Elche und Rentiere auf der Strasse.</li>
+        <li>Maut in Norwegen läuft über das Kennzeichen (AutoPASS / Epass24), die Rechnung kommt nach Hause.</li>
+        <li>Entsorgung: „Bobiltømming“ (NO) bzw. „Tömning“ (SE) an Tankstellen und Rastplätzen, oft gratis.</li>
+        <li>Frei stehen: im Naturreservat nicht übernachten, sonst max. eine Nacht, 150 m Abstand zu Häusern, Verbotsschilder beachten.</li>
+      </ul></div>
+      <div class="card"><h3>Strassen & Wetter</h3><ul>
+        <li>Norwegen: <a href="https://www.vegvesen.no/trafikk" target="_blank" rel="noopener">vegvesen.no/trafikk</a> oder Telefon 175.</li>
+        <li>Schweden: <a href="https://www.trafikverket.se/trafikinformation/" target="_blank" rel="noopener">Trafikverket</a> für die Strasse 84 über Funäsdalen.</li>
+        <li>Wetter: <a href="https://www.yr.no" target="_blank" rel="noopener">Yr</a> für Røros und Tänndalen, auch die Windprognose für die Höhe.</li>
+        <li>Diesel: Schweizer und deutscher Winterdiesel reicht bis ca. −20 °C. Bei Kälte in Norwegen oder Schweden nachtanken.</li>
       </ul></div>
       <div class="card"><h3>Nordlicht</h3><ul>
-        <li>Prognose: <a href="https://www.yr.no" target="_blank" rel="noopener">Yr</a> (Wolken) plus Norway Lights App (KP-Index).</li>
-        <li>Klarer Himmel zählt mehr als hoher KP. Raus aus dem Stadtlicht.</li>
+        <li>Røros und Tänndalen liegen weit genug nördlich: bei klarem Himmel und KP ab etwa 3 möglich.</li>
+        <li>Prognose: Yr (Wolken) plus eine Polarlicht-App (KP-Index). Raus aus dem Ortslicht.</li>
         <li>Kamera: Stativ, ISO 1600–3200, Blende offen, 5–15 s, manueller Fokus auf unendlich.</li>
-        <li>Akkus in der Innentasche warm halten.</li>
       </ul></div>
       <div class="card"><h3>Geld & Alltag</h3><ul>
         <li>Fast überall wird mit Karte gezahlt, Bargeld kaum nötig.</li>
         <li>Leitungswasser ist sehr gut, Flasche mitnehmen.</li>
         <li>Allemannsretten: Natur ist frei zugänglich. Respektiere Privatgrund und Sperrgebiete.</li>
-        <li>Supermärkte: Kiwi, Rema 1000, Coop Extra. Sonntags meist geschlossen.</li>
+        <li>Supermärkte: Kiwi, Rema 1000 (NO), ICA, Coop (SE). In Norwegen sonntags meist zu.</li>
+        <li>Bezahlen fast nur mit Karte, an Automatentankstellen mit PIN.</li>
       </ul></div>
     </div>
   </section>`;
@@ -616,8 +669,8 @@ document.addEventListener('click', e => {
     case 'doImport':
       try {
         const s = JSON.parse(document.getElementById('io-in').value);
-        if (s.v !== 1 || !s.days) throw 0;
-        state = s; save(); io.innerHTML = '<p class="muted">Daten übernommen.</p>';
+        if (!s.days) throw 0;
+        state = migrate(s); save(); io.innerHTML = '<p class="muted">Daten übernommen.</p>';
       } catch (err) { io.insertAdjacentHTML('beforeend', '<p style="color:var(--accent)">Das sind keine gültigen Reisedaten. Kopiere den ganzen Text aus „Daten kopieren".</p>'); }
       break;
     case 'askReset':
@@ -633,7 +686,7 @@ document.addEventListener('change', e => {
   if (el.dataset.toggle) { const [k, i] = el.dataset.toggle.split(':'); const it = state[k].find(x => x.id === i); if (it) { it.done = el.checked; save(); } return; }
   if (el.dataset.plan) { state.plan[el.dataset.plan] = Math.max(0, +el.value || 0); save(); return; }
   if (el.dataset.setting === 'home') { state.home = el.value; save(); return; }
-  if (el.dataset.setting === 'rate') { const r = +el.value; if (r > 0) { state.rate = r; save(); } return; }
+  if (el.dataset.setting === 'rate' || el.dataset.setting === 'rateSek') { const r = +el.value; if (r > 0) { state[el.dataset.setting] = r; save(); } return; }
   const day = el.closest('[data-day]');
   if (day && el.dataset.f) {
     const d = state.days[day.dataset.day];
