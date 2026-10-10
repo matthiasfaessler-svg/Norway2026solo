@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- BODY-START -->
+<title>Norwegen Solo 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: kompakte Reise-App. Kopf mit Countdown + 16-Tage-Tageslichtleiste, darunter Tabs, je Tab eine Spalte (max 860px). */
+:root {
+  --bg: #eef2f2;
+  --surface: #ffffff;
+  --fg: #13202a;
+  --muted: #5a6a73;
+  --line: #d3dcde;
+  --accent: #b4232f;      /* Flaggenrot */
+  --accent-soft: #f6dfe1;
+  --ok: #1e7a68;           /* Nordlicht-Grün, nur für "erledigt" */
+  --ok-soft: #d7efe9;
+  --warn: #9a5b00;
+  --warn-soft: #fbecd2;
+  --sun: #d99a1e;
+  --night: #2a3d52;
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d151b; --surface: #15212a; --fg: #e4ebee; --muted: #93a4ad; --line: #26353f;
+    --accent: #f06b74; --accent-soft: #3a1d22; --ok: #52c3a8; --ok-soft: #13332c;
+    --warn: #f0b45a; --warn-soft: #3a2b12; --sun: #e9b04a; --night: #8fb0d4;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d151b; --surface: #15212a; --fg: #e4ebee; --muted: #93a4ad; --line: #26353f;
+  --accent: #f06b74; --accent-soft: #3a1d22; --ok: #52c3a8; --ok-soft: #13332c;
+  --warn: #f0b45a; --warn-soft: #3a2b12; --sun: #e9b04a; --night: #8fb0d4;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.5; margin: 0; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 64px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.1; text-wrap: balance; margin: 0; }
+h1 { font-size: 2.4rem; letter-spacing: .01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.15rem; }
+.label { font-family: var(--font-display); font-size: .85rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mono, .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Kopf */
+header.top { display: grid; gap: 14px; padding-block: 8px 16px; }
+.top-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+.dates { font-family: var(--font-mono); font-size: .9rem; color: var(--muted); }
+.count { text-align: right; }
+.count .big { font-family: var(--font-display); font-size: 3.2rem; font-weight: 700; line-height: .9; color: var(--accent); }
+.strip { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; align-items: end; height: 64px; }
+.strip .d { position: relative; display: flex; flex-direction: column; justify-content: end; height: 100%; background: var(--night); border-radius: 3px; overflow: hidden; opacity: .9; }
+.strip .d .sunbar { background: var(--sun); width: 100%; }
+.strip .d.today { outline: 2px solid var(--accent); outline-offset: 1px; }
+.strip-legend { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: .72rem; color: var(--muted); }
+
+/* Tabs */
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); margin-bottom: 18px; scrollbar-width: none; }
+nav.tabs button { flex: 0 0 auto; background: none; border: 0; border-bottom: 3px solid transparent; padding: 10px 12px 8px; font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; letter-spacing: .03em; color: var(--muted); cursor: pointer; }
+nav.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+
+section.panel { display: grid; gap: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 6px; }
+.stat .v { font-family: var(--font-display); font-size: 1.8rem; font-weight: 600; line-height: 1; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter > i { display: block; height: 100%; background: var(--ok); }
+.meter.over > i { background: var(--accent); }
+
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 99px; font-size: .78rem; font-weight: 600; white-space: nowrap; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--accent-soft); color: var(--accent); }
+.pill.neutral { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+
+.note { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 10px 12px; border-radius: 0 var(--r) var(--r) 0; }
+.note.info { border-left-color: var(--night); background: var(--surface); }
+
+/* Listen */
+ul.checks { list-style: none; margin: 0; padding: 0; display: grid; }
+ul.checks li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+ul.checks li:last-child { border-bottom: 0; }
+ul.checks li .t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+ul.checks li.done .t { color: var(--muted); text-decoration: line-through; }
+input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ok); flex: 0 0 auto; }
+.x { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px 6px; font-size: 1.1rem; line-height: 1; border-radius: 6px; }
+.x:hover { color: var(--accent); background: var(--accent-soft); }
+.addrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.addrow input, .addrow select { flex: 1 1 140px; min-width: 0; }
+input[type="text"], input[type="number"], input[type="date"], select, textarea { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+textarea { min-height: 70px; resize: vertical; }
+.btn { background: var(--fg); color: var(--bg); border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn.danger { background: var(--accent); color: #fff; }
+.cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+
+/* Tage */
+.day { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.day summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; }
+.day summary::-webkit-details-marker { display: none; }
+.day .dt { font-family: var(--font-display); line-height: 1; }
+.day .dt b { display: block; font-size: 1.7rem; font-weight: 700; }
+.day .dt span { font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.day .where { min-width: 0; }
+.day .where .p { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; overflow-wrap: anywhere; }
+.day .where .s { font-size: .88rem; color: var(--muted); overflow-wrap: anywhere; }
+.day .sun { text-align: right; font-family: var(--font-mono); font-size: .78rem; color: var(--muted); white-space: nowrap; }
+.day.today { border-color: var(--accent); }
+.day .body { padding: 0 14px 14px; display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.fields label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.lightbar { height: 8px; border-radius: 4px; background: var(--night); position: relative; overflow: hidden; }
+.lightbar i { position: absolute; top: 0; bottom: 0; background: var(--sun); }
+
+/* Budget */
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+.tablewrap { overflow-x: auto; }
+th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-family: var(--font-display); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; font-size: .8rem; color: var(--muted); }
+td.r, th.r { text-align: right; }
+.bars { display: grid; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 110px 1fr 120px; gap: 10px; align-items: center; font-size: .9rem; }
+.bar-row input { padding: 4px 8px; text-align: right; }
+@media (max-width: 520px) { .bar-row { grid-template-columns: 1fr 100px; } .bar-row .meter { grid-column: 1 / -1; order: 3; } }
+
+.tips { display: grid; gap: 12px; }
+.tips .card p { margin: 0; }
+.tips ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.nums div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.nums b { font-family: var(--font-display); font-size: 1.8rem; display: block; line-height: 1; color: var(--accent); }
+
+.syncstate { font-size: .8rem; color: var(--muted); }
+.empty { color: var(--muted); padding: 10px 0; }
+footer { margin-top: 32px; display: grid; gap: 10px; }
+@media (prefers-reduced-motion: no-preference) { .meter > i, .strip .sunbar { transition: height .3s, width .3s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="top-row">
+      <div>
+        <div class="label">Solotrip · 16 Tage · 15 Nächte</div>
+        <h1>Norwegen 2026</h1>
+        <div class="dates">Fr 23.10. – Sa 07.11.2026</div>
+      </div>
+      <div class="count" id="countdown"></div>
+    </div>
+    <div>
+      <div class="strip" id="strip" aria-label="Tageslicht pro Reisetag"></div>
+      <div class="strip-legend"><span>23.10.</span><span>gelb = Stunden mit Sonne über dem Horizont, je nach Ort</span><span>07.11.</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="uebersicht">Übersicht</button>
+    <button role="tab" data-tab="route">Route</button>
+    <button role="tab" data-tab="packen">Packliste</button>
+    <button role="tab" data-tab="todo">To-dos</button>
+    <button role="tab" data-tab="budget">Budget</button>
+    <button role="tab" data-tab="tipps">Tipps</button>
+  </nav>
+
+  <main id="main"></main>
+
+  <footer>
+    <div class="card">
+      <div class="cat-head"><h3>Daten sichern</h3><span class="syncstate" id="syncstate">Gespeichert auf diesem Gerät</span></div>
+      <p class="muted" style="margin:0">Alles wird automatisch gespeichert. Für ein Backup oder den Umzug auf ein anderes Gerät: Daten kopieren und dort einfügen.</p>
+      <div class="addrow">
+        <button class="btn ghost" data-action="export">Daten kopieren</button>
+        <button class="btn ghost" data-action="showImport">Daten einfügen</button>
+        <button class="btn ghost" data-action="askReset">Zurücksetzen</button>
+      </div>
+      <div id="io"></div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+const START = '2026-10-23', END = '2026-11-07';
+const KEY = 'norwegen2026-v1';
+
+/* ---------- Orte mit Koordinaten (für Sonnenauf-/untergang) ---------- */
+const PLACES = {
+  oslo: ['Oslo', 59.91, 10.75], bergen: ['Bergen', 60.39, 5.32], flam: ['Flåm', 60.86, 7.11],
+  stavanger: ['Stavanger', 58.97, 5.73], kristiansand: ['Kristiansand', 58.15, 8.0],
+  lillehammer: ['Lillehammer', 61.11, 10.47], roros: ['Røros', 62.57, 11.38],
+  alesund: ['Ålesund', 62.47, 6.15], geiranger: ['Geiranger', 62.10, 7.21],
+  trondheim: ['Trondheim', 63.43, 10.40], bodo: ['Bodø', 67.28, 14.40],
+  svolvaer: ['Svolvær (Lofoten)', 68.23, 14.57], reine: ['Reine (Lofoten)', 67.93, 13.09],
+  narvik: ['Narvik', 68.44, 17.43], senja: ['Senja', 69.23, 17.98], tromso: ['Tromsø', 69.65, 18.96],
+  alta: ['Alta', 69.97, 23.27], hammerfest: ['Hammerfest', 70.66, 23.68], kirkenes: ['Kirkenes', 69.73, 30.05],
+  hurtigruten: ['An Bord (Küste Nord)', 68.8, 16.0]
+};
+
+/* ---------- Datum-Helfer ---------- */
+const pad = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+const fmtShort = s => { const d = parse(s); return `${WD[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth() + 1)}.`; };
+const tripDays = (() => { const out = []; for (let d = parse(START); iso(d) <= END; d.setDate(d.getDate() + 1)) out.push(iso(d)); return out; })();
+const todayIso = () => iso(new Date());
+const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+
+/* ---------- Sonnenstand (NOAA-Näherung) ---------- */
+// Norwegen: Sommerzeit endet So 25.10.2026 um 03:00 → ab dann UTC+1.
+const utcOffset = s => (s < '2026-10-25' ? 120 : 60);
+function sunTimes(s, lat, lon, zenith = 90.833) {
+  const d = parse(s);
+  const n = Math.round((d - new Date(d.getFullYear(), 0, 1)) / 864e5) + 1;
+  const g = 2 * Math.PI / 365 * (n - 1);
+  const eq = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  const decl = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  const r = Math.PI / 180, la = lat * r;
+  const c = Math.cos(zenith * r) / (Math.cos(la) * Math.cos(decl)) - Math.tan(la) * Math.tan(decl);
+  if (c > 1) return { polar: 'night' };
+  if (c < -1) return { polar: 'day' };
+  const ha = Math.acos(c) / r, off = utcOffset(s);
+  return { rise: 720 - 4 * (lon + ha) - eq + off, set: 720 - 4 * (lon - ha) - eq + off };
+}
+const hm = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`; };
+const dur = m => `${Math.floor(m / 60)} h ${pad(Math.round(m % 60))}`;
+function light(s, key) {
+  const p = PLACES[key]; if (!p) return null;
+  const t = sunTimes(s, p[1], p[2]);
+  const dark = sunTimes(s, p[1], p[2], 102); // nautische Dämmerung = richtig dunkel genug für Nordlicht
+  return { ...t, len: t.polar ? (t.polar === 'day' ? 1440 : 0) : t.set - t.rise, darkFrom: dark.polar ? null : dark.set };
+}
+
+/* ---------- Standarddaten ---------- */
+let uid = 0; const id = () => Date.now().toString(36) + (uid++).toString(36);
+const PACK = {
+  'Kleidung (Zwiebel)': ['Merino-Unterwäsche lang (2×)', 'Merino-Shirts (3×)', 'Fleece oder Wollpullover', 'Isolationsjacke (Daune/Synthetik)', 'Wasserdichte Hardshell-Jacke', 'Regenhose', 'Wanderhose', 'Wollsocken (5×)', 'Mütze, Buff, Handschuhe + Fäustlinge', 'Wasserdichte Wanderschuhe', 'Bequeme Schuhe für die Stadt', 'Badesachen (Badstue/Sauna)'],
+  'Ausrüstung': ['Stirnlampe + Ersatzbatterien', 'Grödel / Spikes für Eis', 'Reflektor (Refleks) für dunkle Strassen', 'Thermosflasche', 'Trinkflasche', 'Tagesrucksack mit Regenhülle', 'Packsäcke / Trockenbeutel', 'Schnelltrocknendes Handtuch', 'Ohrstöpsel + Schlafmaske'],
+  'Technik & Fotografie': ['Handy + Ladekabel', 'Powerbank (Kälte leert Akkus schnell)', 'Stativ für Nordlicht', 'Ersatzakkus Kamera (körpernah tragen)', 'Speicherkarten', 'Reisestecker (Norwegen: Typ C/F)', 'Kopfhörer'],
+  'Dokumente & Geld': ['Pass oder ID (gültig bis nach 07.11.)', 'Kreditkarte + Ersatzkarte', 'Krankenversicherungskarte / EHIC', 'Reiseversicherung (Police offline)', 'Führerschein (falls Mietwagen)', 'Buchungsbestätigungen offline', 'Notfallkontakte auf Papier'],
+  'Gesundheit & Pflege': ['Reiseapotheke + Blasenpflaster', 'Persönliche Medikamente', 'Lippenbalsam + reichhaltige Creme', 'Sonnencreme (Schnee reflektiert)', 'Vitamin D', 'Handwärmer']
+};
+const TODOS = [
+  ['Flüge hin und zurück buchen', '2026-10-12', 'Buchung'],
+  ['Alle 15 Nächte Unterkunft festmachen', '2026-10-15', 'Buchung'],
+  ['Reiseversicherung prüfen (Rücktransport, Storno)', '2026-10-14', 'Dokumente'],
+  ['Pass/ID-Gültigkeit prüfen', '2026-10-12', 'Dokumente'],
+  ['Kreditkarte ohne Auslandsgebühr bereitlegen, Reisebank informieren', '2026-10-16', 'Geld'],
+  ['Mobilfunk: Roaming-Tarif oder eSIM für Norwegen', '2026-10-18', 'Technik'],
+  ['Apps installieren: Entur, Yr, Vy, Varsom, Norway Lights', '2026-10-18', 'Technik'],
+  ['Offline-Karten laden (Google/Maps.me/Norgeskart)', '2026-10-20', 'Technik'],
+  ['Zug-/Fährtickets buchen (Bergensbahn, Hurtigruten, Fähren)', '2026-10-16', 'Buchung'],
+  ['Mietwagen: Winterreifen bestätigen, AutoPASS/Maut klären', '2026-10-16', 'Buchung'],
+  ['Reiseplan + Unterkünfte mit Notfallkontakt teilen', '2026-10-21', 'Sicherheit'],
+  ['Wettervorhersage Yr checken, Packliste anpassen', '2026-10-21', 'Packen'],
+  ['Online-Check-in Hinflug', '2026-10-22', 'Buchung']
+];
+const SUGGEST = [
+  ['oslo', 'Oslo', 'Ankunft, Flughafenzug nach Oslo S'],
+  ['oslo', 'Oslo', 'Oper, Munch, Vigelandpark'],
+  ['bergen', 'Bergen', 'Bergensbahn Oslo → Bergen (ca. 7 h, Fensterplatz links)'],
+  ['bergen', 'Bergen', 'Bryggen, Fløyen'],
+  ['flam', 'Flåm / Nærøyfjord', 'Fjordtour, Flåmsbana'],
+  ['bergen', 'Bergen', 'Puffertag'],
+  ['tromso', 'Tromsø', 'Flug Bergen → Tromsø'],
+  ['tromso', 'Tromsø', 'Nordlicht-Tour am Abend'],
+  ['tromso', 'Tromsø', 'Fjellheisen, Eismeerkathedrale'],
+  ['senja', 'Senja', 'Tagesausflug oder Übernachtung'],
+  ['hurtigruten', 'Hurtigruten', 'Tromsø → Svolvær an Bord'],
+  ['svolvaer', 'Lofoten', 'Svolvær, Henningsvær'],
+  ['reine', 'Lofoten', 'Reine, Hamnøy, Å'],
+  ['bodo', 'Bodø', 'Fähre Moskenes → Bodø, Saltstraumen'],
+  ['oslo', 'Oslo', 'Flug Bodø → Oslo, letzter Abend'],
+  ['oslo', 'Oslo', 'Heimflug']
+];
+function defaults() {
+  const days = {};
+  tripDays.forEach((s, i) => { const [loc, place, plan] = SUGGEST[i]; days[s] = { loc, place, plan, stay: '', transport: '', notes: '', booked: false }; });
+  const packing = [];
+  Object.entries(PACK).forEach(([cat, items]) => items.forEach(text => packing.push({ id: id(), cat, text, done: false })));
+  return {
+    v: 1, updatedAt: 0, suggestion: true,
+    home: 'EUR', rate: 11.7,
+    plan: { 'Flüge': 600, 'Unterkunft': 1800, 'Transport': 500, 'Essen': 700, 'Aktivitäten': 500, 'Sonstiges': 200 },
+    expenses: [], days, packing,
+    todos: TODOS.map(([text, due, cat]) => ({ id: id(), text, due, cat, done: false })),
+    notes: ''
+  };
+}
+
+/* ---------- Speicher ---------- */
+let state;
+try { const raw = localStorage.getItem(KEY); state = raw ? JSON.parse(raw) : null; } catch (e) { state = null; }
+if (!state || state.v !== 1) state = defaults();
+let tab = 'uebersicht';
+try { tab = localStorage.getItem(KEY + '-tab') || tab; } catch (e) {}
+if (/^#[a-z]+$/.test(location.hash)) tab = location.hash.slice(1);
+
+let cloud = null, cloudTimer = null, cloudBusy = false, cloudDirty = false;
+const syncEl = document.getElementById('syncstate');
+function save(rerender = true) {
+  state.updatedAt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  if (cloud) { cloudDirty = true; clearTimeout(cloudTimer); cloudTimer = setTimeout(pushCloud, 1200); syncEl.textContent = 'Speichert …'; }
+  if (rerender) render();
+}
+async function pushCloud() {
+  if (!cloud || cloudBusy || !cloudDirty) return;
+  cloudBusy = true; cloudDirty = false;
+  try { await cloud.set({ json: JSON.stringify(state), updatedAt: state.updatedAt }); syncEl.textContent = 'In deinem Konto gespeichert'; }
+  catch (e) { syncEl.textContent = 'Nur auf diesem Gerät gespeichert'; }
+  cloudBusy = false;
+  if (cloudDirty) pushCloud();
+}
+async function initCloud() {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const uidv = await user.id(); if (!uidv) return;
+    const ref = db.collection('data/users/' + uidv).doc('trip');
+    const snap = await ref.get();
+    cloud = ref;
+    const remote = snap.exists ? snap.data() : null;
+    if (remote && remote.updatedAt > (state.updatedAt || 0)) {
+      state = JSON.parse(remote.json);
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+      render();
+      syncEl.textContent = 'In deinem Konto gespeichert';
+    } else if (state.updatedAt) { cloudDirty = true; pushCloud(); }
+    else syncEl.textContent = 'Wird in deinem Konto gespeichert';
+  } catch (e) { /* bleibt lokal */ }
+}
+
+/* ---------- Rendering ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (v, cur) => `${Math.round(v).toLocaleString('de-CH')} ${cur}`;
+const toHome = e => (e.cur === 'NOK' ? e.amount / (state.rate || 1) : e.amount);
+const main = document.getElementById('main');
+
+function renderHead() {
+  const t = todayIso();
+  const cd = document.getElementById('countdown');
+  if (t < START) { const n = daysBetween(t, START); cd.innerHTML = `<div class="big num">${n}</div><div class="label">${n === 1 ? 'Tag' : 'Tage'} bis zum Abflug</div>`; }
+  else if (t <= END) { const n = daysBetween(START, t) + 1; cd.innerHTML = `<div class="big num">${n}/16</div><div class="label">Reisetag</div>`; }
+  else cd.innerHTML = `<div class="big">Hjemme</div><div class="label">Willkommen zurück</div>`;
+  document.getElementById('strip').innerHTML = tripDays.map(s => {
+    const d = state.days[s] || {}; const l = light(s, d.loc);
+    const h = l ? Math.max(2, l.len / 1440 * 100 * 2.2) : 0;
+    const title = `${fmtShort(s)} ${d.place || ''}${l && !l.polar ? ` · Sonne ${dur(l.len)}` : ''}`;
+    return `<div class="d${s === t ? ' today' : ''}" title="${esc(title)}"><div class="sunbar" style="height:${Math.min(100, h)}%"></div></div>`;
+  }).join('');
+}
+
+function pct(a, b) { return b ? Math.round(a / b * 100) : 0; }
+
+function viewOverview() {
+  const packDone = state.packing.filter(p => p.done).length;
+  const todoDone = state.todos.filter(p => p.done).length;
+  const spent = state.expenses.reduce((a, e) => a + toHome(e), 0);
+  const planned = Object.values(state.plan).reduce((a, b) => a + (+b || 0), 0);
+  const nights = tripDays.slice(0, -1);
+  const booked = nights.filter(s => state.days[s]?.booked).length;
+  const t = todayIso();
+  const open = state.todos.filter(x => !x.done).sort((a, b) => (a.due || '9') < (b.due || '9') ? -1 : 1).slice(0, 5);
+  const firstDay = state.days[START], l = light(START, firstDay?.loc);
+  return `
+  <section class="panel">
+    <div class="stats">
+      ${stat('Unterkünfte', `${booked}/15`, 'Nächte gebucht', pct(booked, 15))}
+      ${stat('To-dos', `${todoDone}/${state.todos.length}`, 'erledigt', pct(todoDone, state.todos.length))}
+      ${stat('Packliste', `${packDone}/${state.packing.length}`, 'eingepackt', pct(packDone, state.packing.length))}
+      ${stat('Budget', money(spent, state.home), `von ${money(planned, state.home)}`, pct(spent, planned), spent > planned)}
+    </div>
+    <div class="card">
+      <div class="cat-head"><h2>Als Nächstes</h2><button class="btn ghost" data-go="todo">Alle To-dos</button></div>
+      ${open.length ? `<ul class="checks">${open.map(todoItem).join('')}</ul>` : '<p class="empty">Alles erledigt. God tur!</p>'}
+    </div>
+    <div class="note"><strong>Zeitumstellung am So 25.10.2026:</strong> Norwegen stellt um 03:00 auf Winterzeit (UTC+1) zurück. Zug-, Fähr- und Tourzeiten an diesem Tag doppelt prüfen.</div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Was dich erwartet</h3>
+        <ul style="margin:0;padding-left:18px;display:grid;gap:4px">
+          <li>Süden/Westen: 2–10 °C, viel Regen, Bergen ist die nasseste Stadt Europas.</li>
+          <li>Norden (Tromsø, Lofoten): −3 bis 5 °C, erster Schnee, glatte Wege.</li>
+          <li>Tageslicht schrumpft schnell: Tromsø verliert pro Tag rund 15 Minuten.</li>
+          <li>Beste Nordlicht-Saison: lange dunkle Nächte, klare Abende abpassen.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Ankunftstag ${esc(firstDay?.place || '')}</h3>
+        ${l && !l.polar ? `<p style="margin:0">Sonnenaufgang <span class="mono">${hm(l.rise)}</span>, Sonnenuntergang <span class="mono">${hm(l.set)}</span>. Tageslicht ${dur(l.len)}.</p>` : '<p class="muted" style="margin:0">Ort für den 23.10. in der Route wählen.</p>'}
+        <p class="muted" style="margin:0">Plane Ankünfte bei Tageslicht, besonders an neuen Orten und mit Mietwagen.</p>
+        <button class="btn ghost" data-go="route" style="justify-self:start">Route ansehen</button>
+      </div>
+    </div>
+  </section>`;
+}
+function stat(label, v, sub, p, over) {
+  return `<div class="stat"><span class="label">${label}</span><span class="v num">${v}</span><span class="muted" style="font-size:.85rem">${sub}</span><div class="meter${over ? ' over' : ''}"><i style="width:${Math.min(100, p)}%"></i></div></div>`;
+}
+
+function viewRoute() {
+  const t = todayIso();
+  const opts = sel => Object.entries(PLACES).map(([k, p]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${esc(p[0])}</option>`).join('');
+  return `<section class="panel">
+    ${state.suggestion ? `<div class="note info"><strong>Vorschlag:</strong> Die Route ist eine Beispielroute Oslo → Bergen → Tromsø → Lofoten → Oslo. Tippe auf einen Tag, um Ort, Unterkunft und Pläne anzupassen. <button class="btn ghost" data-action="clearRoute" style="margin-top:8px">Leere Route beginnen</button> <button class="btn ghost" data-action="hideSuggest" style="margin-top:8px">Hinweis ausblenden</button></div>` : ''}
+    <div style="display:grid;gap:8px">
+    ${tripDays.map((s, i) => {
+      const d = state.days[s]; const l = light(s, d.loc); const last = i === tripDays.length - 1;
+      const sun = l ? (l.polar ? (l.polar === 'night' ? 'Polarnacht' : 'Mitternachtssonne') : `☀ ${hm(l.rise)}–${hm(l.set)}<br>${dur(l.len)}`) : '';
+      const bar = l && !l.polar ? `<div class="lightbar" title="Tageslicht"><i style="left:${l.rise / 1440 * 100}%;width:${l.len / 1440 * 100}%"></i></div>` : '';
+      const status = last ? '<span class="pill neutral">Heimreise</span>' : d.booked ? '<span class="pill ok">gebucht</span>' : '<span class="pill warn">Unterkunft offen</span>';
+      return `<details class="day${s === t ? ' today' : ''}" data-day="${s}"${openDays.has(s) ? ' open' : ''}>
+        <summary>
+          <div class="dt"><span>${WD[parse(s).getDay()]} · Tag ${i + 1}</span><b class="num">${pad(parse(s).getDate())}.${pad(parse(s).getMonth() + 1)}.</b></div>
+          <div class="where"><div class="p">${esc(d.place || 'Ort offen')}</div><div class="s">${esc(d.plan || '')}</div><div style="margin-top:4px">${status}</div></div>
+          <div class="sun">${sun}</div>
+        </summary>
+        <div class="body">
+          ${bar}
+          ${l && l.darkFrom ? `<div class="muted" style="font-size:.88rem">Dunkel genug für Nordlicht ab ca. <span class="mono">${hm(l.darkFrom)}</span></div>` : ''}
+          <div class="fields">
+            <label>Ort (Anzeige)<input type="text" id="place-${s}" data-f="place" value="${esc(d.place)}"></label>
+            <label>Region für Sonnenzeiten<select id="loc-${s}" data-f="loc"><option value="">–</option>${opts(d.loc)}</select></label>
+            <label>Plan<input type="text" id="plan-${s}" data-f="plan" value="${esc(d.plan)}"></label>
+            <label>Anreise / Transport<input type="text" id="transport-${s}" data-f="transport" value="${esc(d.transport)}" placeholder="z. B. Vy 06:25 ab Oslo S"></label>
+            ${last ? '' : `<label>Unterkunft<input type="text" id="stay-${s}" data-f="stay" value="${esc(d.stay)}" placeholder="Name, Adresse, Check-in"></label>`}
+          </div>
+          <label class="fields" style="display:flex;gap:8px;align-items:center;color:var(--fg)">${last ? '' : `<input type="checkbox" id="booked-${s}" data-f="booked"${d.booked ? ' checked' : ''}> Unterkunft gebucht`}</label>
+          <label style="display:grid;gap:4px;font-size:.85rem;color:var(--muted)">Notizen<textarea id="notes-${s}" data-f="notes">${esc(d.notes)}</textarea></label>
+        </div>
+      </details>`;
+    }).join('')}
+    </div>
+  </section>`;
+}
+const openDays = new Set();
+
+function todoItem(x) {
+  const t = todayIso();
+  let p = '';
+  if (!x.done && x.due) {
+    const n = daysBetween(t, x.due);
+    p = n < 0 ? `<span class="pill bad">überfällig</span>` : n === 0 ? `<span class="pill warn">heute</span>` : n <= 3 ? `<span class="pill warn">in ${n} T.</span>` : `<span class="pill neutral">${fmtShort(x.due)}</span>`;
+  }
+  return `<li class="${x.done ? 'done' : ''}"><input type="checkbox" id="td-${x.id}" data-toggle="todos:${x.id}"${x.done ? ' checked' : ''} aria-label="erledigt"><span class="t">${esc(x.text)}</span>${p}<button class="x" data-del="todos:${x.id}" aria-label="Löschen">×</button></li>`;
+}
+function viewTodo() {
+  const sorted = [...state.todos].sort((a, b) => (a.done - b.done) || ((a.due || '9') < (b.due || '9') ? -1 : 1));
+  return `<section class="panel">
+    <div class="card">
+      <h2>Vorbereitung</h2>
+      <form class="addrow" data-form="todo">
+        <input type="text" id="new-todo" name="text" placeholder="Neue Aufgabe" required>
+        <input type="date" id="new-todo-due" name="due" min="2026-01-01" max="${END}">
+        <select id="new-todo-cat" name="cat">${['Buchung', 'Dokumente', 'Geld', 'Technik', 'Sicherheit', 'Packen', 'Sonstiges'].map(c => `<option>${c}</option>`).join('')}</select>
+        <button class="btn">Hinzufügen</button>
+      </form>
+      ${sorted.length ? `<ul class="checks">${sorted.map(todoItem).join('')}</ul>` : '<p class="empty">Noch keine Aufgaben. Füge oben die erste hinzu.</p>'}
+    </div>
+    <div class="card">
+      <h3>Notfallkontakte & Notizen</h3>
+      <textarea id="notes-global" data-global="notes" placeholder="Notfallkontakt zuhause, Versicherungsnummer, Botschaft, Buchungscodes …" style="min-height:120px">${esc(state.notes)}</textarea>
+    </div>
+  </section>`;
+}
+
+function viewPack() {
+  const cats = [...new Set(state.packing.map(p => p.cat))];
+  return `<section class="panel">
+    <form class="addrow card" data-form="pack" style="display:flex">
+      <input type="text" id="new-pack" name="text" placeholder="Was fehlt noch?" required>
+      <select id="new-pack-cat" name="cat">${[...cats, 'Sonstiges'].filter((c, i, a) => a.indexOf(c) === i).map(c => `<option>${esc(c)}</option>`).join('')}</select>
+      <button class="btn">Hinzufügen</button>
+    </form>
+    <div class="grid2">
+    ${cats.map(c => {
+      const items = state.packing.filter(p => p.cat === c); const done = items.filter(p => p.done).length;
+      return `<div class="card"><div class="cat-head"><h3>${esc(c)}</h3><span class="mono muted">${done}/${items.length}</span></div>
+      <ul class="checks">${items.map(p => `<li class="${p.done ? 'done' : ''}"><input type="checkbox" id="pk-${p.id}" data-toggle="packing:${p.id}"${p.done ? ' checked' : ''} aria-label="eingepackt"><span class="t">${esc(p.text)}</span><button class="x" data-del="packing:${p.id}" aria-label="Löschen">×</button></li>`).join('')}</ul></div>`;
+    }).join('')}
+    </div>
+    <div class="addrow"><button class="btn ghost" data-action="unpackAll">Alle Haken entfernen (Rückreise)</button></div>
+  </section>`;
+}
+
+function viewBudget() {
+  const cats = Object.keys(state.plan);
+  const byCat = Object.fromEntries(cats.map(c => [c, 0]));
+  state.expenses.forEach(e => { byCat[e.cat] = (byCat[e.cat] || 0) + toHome(e); });
+  const spent = Object.values(byCat).reduce((a, b) => a + b, 0);
+  const planned = cats.reduce((a, c) => a + (+state.plan[c] || 0), 0);
+  const H = state.home;
+  const list = [...state.expenses].sort((a, b) => (a.date < b.date ? 1 : -1));
+  return `<section class="panel">
+    <div class="stats">
+      ${stat('Ausgegeben', money(spent, H), `≈ ${money(spent * state.rate, 'NOK')}`, pct(spent, planned), spent > planned)}
+      ${stat('Geplant', money(planned, H), 'Gesamtbudget', 100)}
+      ${stat('Übrig', money(planned - spent, H), `≈ ${money((planned - spent) / 16, H)} pro Reisetag`, pct(Math.max(0, planned - spent), planned))}
+    </div>
+    <div class="card">
+      <div class="cat-head"><h2>Kategorien</h2><span class="muted" style="font-size:.85rem">Plan in ${H}</span></div>
+      <div class="bars">${cats.map(c => `<div class="bar-row"><span>${esc(c)}<br><span class="mono muted" style="font-size:.8rem">${money(byCat[c] || 0, H)}</span></span><div class="meter${byCat[c] > state.plan[c] ? ' over' : ''}"><i style="width:${Math.min(100, pct(byCat[c] || 0, +state.plan[c]))}%"></i></div><input type="number" min="0" step="10" id="plan-${c}" data-plan="${esc(c)}" value="${+state.plan[c] || 0}" aria-label="Plan ${esc(c)}"></div>`).join('')}</div>
+      <div class="fields">
+        <label>Heimwährung<select id="home-cur" data-setting="home">${['EUR', 'CHF', 'USD', 'GBP'].map(c => `<option${c === H ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label>Kurs: 1 ${H} = … NOK<input type="number" step="0.01" min="0.01" id="rate" data-setting="rate" value="${state.rate}"></label>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Ausgabe erfassen</h2>
+      <form class="addrow" data-form="expense">
+        <input type="text" id="exp-text" name="text" placeholder="z. B. Fiskesuppe Bergen" required>
+        <input type="number" id="exp-amount" name="amount" step="0.01" min="0" placeholder="Betrag" required>
+        <select id="exp-cur" name="cur"><option>NOK</option><option>${H}</option></select>
+        <select id="exp-cat" name="cat">${cats.map(c => `<option>${esc(c)}</option>`).join('')}</select>
+        <input type="date" id="exp-date" name="date" value="${todayIso() >= START && todayIso() <= END ? todayIso() : START}">
+        <button class="btn">Erfassen</button>
+      </form>
+      ${list.length ? `<div class="tablewrap"><table><thead><tr><th>Datum</th><th>Was</th><th>Kategorie</th><th class="r">Betrag</th><th class="r">${H}</th><th></th></tr></thead><tbody>
+      ${list.map(e => `<tr><td class="mono">${fmtShort(e.date)}</td><td>${esc(e.text)}</td><td class="muted">${esc(e.cat)}</td><td class="r mono">${e.amount.toLocaleString('de-CH')} ${e.cur}</td><td class="r mono">${toHome(e).toFixed(2)}</td><td><button class="x" data-del="expenses:${e.id}" aria-label="Löschen">×</button></td></tr>`).join('')}
+      </tbody></table></div>` : '<p class="empty">Noch keine Ausgaben. Erfasse Beträge direkt in NOK, die App rechnet in deine Währung um.</p>'}
+    </div>
+    <div class="note info">Richtwerte: Kaffee 45–60 NOK, Mittagessen 180–250 NOK, Bier im Pub 110–140 NOK, Nordlicht-Tour 1&nbsp;300–2&nbsp;000 NOK. Alkohol über 4,7 % nur im Vinmonopolet (Sa bis 15/16 Uhr, So zu).</div>
+  </section>`;
+}
+
+function viewTips() {
+  return `<section class="panel tips">
+    <div class="card"><h2>Notruf</h2>
+      <div class="nums"><div><b>112</b>Polizei</div><div><b>113</b>Ambulanz</div><div><b>110</b>Feuer</div><div><b>116 117</b>Ärztlicher Notdienst</div></div>
+      <p class="muted">Seenotrettung: 120 oder über 112. Lawinen- und Wetterwarnungen: varsom.no.</p></div>
+    <div class="grid2">
+      <div class="card"><h3>Allein unterwegs</h3><ul>
+        <li>Teile täglich Ort und Unterkunft mit einer Person zuhause.</li>
+        <li>Wanderungen in der Hütte oder Unterkunft hinterlegen, früh starten, vor Einbruch der Dunkelheit zurück.</li>
+        <li>Fjellvettreglene (Bergregeln) beachten: Umkehren ist keine Schande.</li>
+        <li>Stirnlampe und warme Schicht immer dabei, auch bei kurzen Touren.</li>
+        <li>Nordlicht-Touren mit Guide sind allein günstiger und sicherer als Fahrten im Dunkeln.</li>
+      </ul></div>
+      <div class="card"><h3>Unterwegs sein</h3><ul>
+        <li><a href="https://entur.no" target="_blank" rel="noopener">Entur</a>: alle Züge, Busse und Fähren in einer App.</li>
+        <li><a href="https://www.vy.no" target="_blank" rel="noopener">Vy</a>: Bergensbahn und Fernzüge, früh buchen für Minipris.</li>
+        <li>Mietwagen: Winterreifen sind im Norden ab Mitte Oktober Pflicht. Maut läuft über AutoPASS.</li>
+        <li>Fähren an der Küste fahren im Winter seltener. Fahrplan am Vortag prüfen.</li>
+      </ul></div>
+      <div class="card"><h3>Nordlicht</h3><ul>
+        <li>Prognose: <a href="https://www.yr.no" target="_blank" rel="noopener">Yr</a> (Wolken) plus Norway Lights App (KP-Index).</li>
+        <li>Klarer Himmel zählt mehr als hoher KP. Raus aus dem Stadtlicht.</li>
+        <li>Kamera: Stativ, ISO 1600–3200, Blende offen, 5–15 s, manueller Fokus auf unendlich.</li>
+        <li>Akkus in der Innentasche warm halten.</li>
+      </ul></div>
+      <div class="card"><h3>Geld & Alltag</h3><ul>
+        <li>Fast überall wird mit Karte gezahlt, Bargeld kaum nötig.</li>
+        <li>Leitungswasser ist sehr gut, Flasche mitnehmen.</li>
+        <li>Allemannsretten: Natur ist frei zugänglich. Respektiere Privatgrund und Sperrgebiete.</li>
+        <li>Supermärkte: Kiwi, Rema 1000, Coop Extra. Sonntags meist geschlossen.</li>
+      </ul></div>
+    </div>
+  </section>`;
+}
+
+function render() {
+  renderHead();
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  const v = { uebersicht: viewOverview, route: viewRoute, packen: viewPack, todo: viewTodo, budget: viewBudget, tipps: viewTips }[tab] || viewOverview;
+  main.innerHTML = v();
+}
+
+/* ---------- Ereignisse ---------- */
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]'); if (!b) return;
+  go(b.dataset.tab);
+});
+function go(t) { tab = t; try { localStorage.setItem(KEY + '-tab', t); } catch (e) {} render(); window.scrollTo({ top: 0 }); }
+
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  const del = e.target.closest('[data-del]');
+  if (del) { const [k, i] = del.dataset.del.split(':'); state[k] = state[k].filter(x => x.id !== i); save(); return; }
+  const a = e.target.closest('[data-action]'); if (!a) return;
+  const io = document.getElementById('io');
+  switch (a.dataset.action) {
+    case 'hideSuggest': state.suggestion = false; save(); break;
+    case 'clearRoute': tripDays.forEach(s => { state.days[s] = { loc: '', place: '', plan: '', stay: '', transport: '', notes: '', booked: false }; }); state.suggestion = false; save(); break;
+    case 'unpackAll': state.packing.forEach(p => p.done = false); save(); break;
+    case 'export': {
+      const txt = JSON.stringify(state);
+      io.innerHTML = `<textarea id="io-out" readonly style="min-height:90px">${esc(txt)}</textarea>`;
+      const ta = document.getElementById('io-out');
+      const done = () => { ta.insertAdjacentHTML('afterend', '<p class="muted" style="margin:6px 0 0">Kopiert. Füge den Text an einem sicheren Ort ein (z. B. Notizen-App).</p>'); };
+      if (navigator.clipboard?.writeText) navigator.clipboard.writeText(txt).then(done, () => { ta.select(); });
+      else ta.select();
+      break;
+    }
+    case 'showImport':
+      io.innerHTML = `<div style="display:grid;gap:8px"><textarea id="io-in" placeholder="Kopierte Daten hier einfügen"></textarea><div class="addrow"><button class="btn" data-action="doImport">Daten übernehmen</button></div></div>`;
+      break;
+    case 'doImport':
+      try {
+        const s = JSON.parse(document.getElementById('io-in').value);
+        if (s.v !== 1 || !s.days) throw 0;
+        state = s; save(); io.innerHTML = '<p class="muted">Daten übernommen.</p>';
+      } catch (err) { io.insertAdjacentHTML('beforeend', '<p style="color:var(--accent)">Das sind keine gültigen Reisedaten. Kopiere den ganzen Text aus „Daten kopieren".</p>'); }
+      break;
+    case 'askReset':
+      io.innerHTML = `<div class="note" style="display:grid;gap:8px">Wirklich alles auf den Ausgangszustand zurücksetzen? Deine Eingaben gehen verloren.<div class="addrow"><button class="btn danger" data-action="doReset">Ja, zurücksetzen</button><button class="btn ghost" data-action="cancel">Abbrechen</button></div></div>`;
+      break;
+    case 'doReset': state = defaults(); save(); io.innerHTML = ''; break;
+    case 'cancel': io.innerHTML = ''; break;
+  }
+});
+
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.toggle) { const [k, i] = el.dataset.toggle.split(':'); const it = state[k].find(x => x.id === i); if (it) { it.done = el.checked; save(); } return; }
+  if (el.dataset.plan) { state.plan[el.dataset.plan] = Math.max(0, +el.value || 0); save(); return; }
+  if (el.dataset.setting === 'home') { state.home = el.value; save(); return; }
+  if (el.dataset.setting === 'rate') { const r = +el.value; if (r > 0) { state.rate = r; save(); } return; }
+  const day = el.closest('[data-day]');
+  if (day && el.dataset.f) {
+    const d = state.days[day.dataset.day];
+    if (el.dataset.f === 'booked') d.booked = el.checked;
+    else if (el.dataset.f === 'loc') { d.loc = el.value; if (!d.place && PLACES[el.value]) d.place = PLACES[el.value][0]; }
+    else d[el.dataset.f] = el.value;
+    save();
+  }
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.global === 'notes') { state.notes = el.value; save(false); return; }
+  const day = el.closest('[data-day]');
+  if (day && el.dataset.f && el.type !== 'checkbox' && el.tagName !== 'SELECT') { state.days[day.dataset.day][el.dataset.f] = el.value; save(false); }
+});
+document.addEventListener('toggle', e => {
+  const d = e.target.closest?.('[data-day]'); if (!d) return;
+  d.open ? openDays.add(d.dataset.day) : openDays.delete(d.dataset.day);
+}, true);
+document.addEventListener('submit', e => {
+  const f = e.target.closest('form[data-form]'); if (!f) return;
+  e.preventDefault();
+  const fd = Object.fromEntries(new FormData(f));
+  if (f.dataset.form === 'todo') state.todos.push({ id: id(), text: fd.text.trim(), due: fd.due || '', cat: fd.cat, done: false });
+  if (f.dataset.form === 'pack') state.packing.push({ id: id(), text: fd.text.trim(), cat: fd.cat, done: false });
+  if (f.dataset.form === 'expense') state.expenses.push({ id: id(), text: fd.text.trim(), amount: +fd.amount, cur: fd.cur, cat: fd.cat, date: fd.date || todayIso() });
+  save();
+  const first = document.querySelector(`form[data-form="${f.dataset.form}"] input`); if (first) first.focus();
+});
+
+render();
+initCloud();
+})();
+</script>
+<!-- BODY-END -->
+</body>
+</html>
